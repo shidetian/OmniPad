@@ -498,7 +498,7 @@
 
 		//var buffer = [];
         temp.getSession().on('change', function(){
-            var txt = escape(temp.getSession().getValue());
+            var txt = (temp.getSession().getValue());
             var lines = temp.session.doc.$lines;
             var rows = lines.length;
             var chars_per_row = $(previous).width()/8;
@@ -521,7 +521,7 @@
 			if (toggle){
 				viewUpdate(data);
 			}
-            if (!dont_update){
+            if (!dont_update&&uid!=1){
                 console.log('began update');
                 $.post(baseUrl+"/update/"+uid+"/"+temp.container.id+'/', {text:txt, code:0},
                  function(data){
@@ -561,7 +561,7 @@
             var txt = d[1];
             var code = d[2];
 
-            buf += '\n\n'+txt;
+            buf += '\n\n'+txt.replace(/(<([^>]+)>)/ig,"");
         })
         var html = convertMarkdown(buf);
         // parse latex
@@ -639,14 +639,10 @@
             addCell();
         }*/
 
+        //Initialize active cell
+        active = editors.slice(-1).pop();
+        active.focus();
         startPolling();
-
-        // document.onkeypress=function(event){
-        // var keyCode = ('which' in event) ? event.which : event.keyCode;
-        // if (keyCode==13&&event.ctrlKey){
-        // addCell();
-        // }
-        // }
     });
 </script>
 
@@ -664,6 +660,7 @@
 
         box-shadow: 0px 0px 5px #ccf;
         top:20px;
+		left:20px;
     }
 
     .eq{
