@@ -1,4 +1,12 @@
 <?php
+function checkPermission(){
+	/*$pid = $_GET["pid"];
+	$result=mysql_query("SELECT * FROM Documents WHERE pid='$pid'");
+	$row=mysql_fetch_array($result);*/
+	//check to make sure document exists
+	//Check for permissions
+}
+
 if(!isset($_REQUEST["mode"])){
 	echo("HTTP/1.1 403 Forbidden");
 	exit();
@@ -58,7 +66,7 @@ if ($mode==="createDocument"){ //Post
 		mysql_query("UPDATE Cells SET data='$text' WHERE cid='$cid'");
 		echo ('sucess');
 	}else{
-		header("HTTP/1.1 404 Not Found");
+		echo ('cell not found');
 	}
 	
 }elseif($mode==="pollChangedCells"){ //Get
@@ -76,17 +84,13 @@ if ($mode==="createDocument"){ //Post
 		}
 	}
 	echo (json_encode($changed));
+}elseif ($mode==="lockCell"){
+	
+}elseif ($mode==="unlockCell"){
+
 }else{
+	echo("Invalid mode");
 	exit();
 }
-
-function checkPermission(){
-	/*$pid = $_GET["pid"];
-	$result=mysql_query("SELECT * FROM Documents WHERE pid='$pid'");
-	$row=mysql_fetch_array($result);*/
-	//check to make sure document exists
-	//Check for permissions
-}
-
 }
 ?>
