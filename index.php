@@ -1,6 +1,6 @@
 <?php
-if (isset($uid)){
-	$uid = filter_input($uid,FILTER_SANITIZE_NUMBER_INT);
+if (isset($_REQUEST["pid"])){
+	$pid = filter_input($_REQUEST["pid"],FILTER_SANITIZE_NUMBER_INT);
 }else{
 	echo "No page id!!?";
 	exit();
@@ -19,7 +19,7 @@ if (isset($uid)){
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
 <script type="text/javascript" src="./js/showdown.js"></script>
 <script type="text/javascript" src="./js/anthony.js"></script>
-<script src="./ace/build/src/ace-uncompressed.js" type="text/javascript" charset="utf-8"></script>
+<script src="./src/ace-uncompressed.js" type="text/javascript" charset="utf-8"></script>
 
 <script src="./js/jquery-1.7.1.js"></script>
 <script src="./js/jquery.ui.core.js"></script>
@@ -450,9 +450,11 @@ if (isset($uid)){
 </script>
 
 <script>
-    var baseUrl = "";
-    var uid = <?php $uid ?>;
+    var baseUrl = "localhost:8080";
+    var pid = 4<?php //echo(''+$pid); ?>;
+	var uid = 1;
     var aces = {};
+	var revisions = {};
     var previous = "#top";
     dont_update = false;
 //
@@ -465,13 +467,13 @@ if (isset($uid)){
 //This adds a cell
         $.ajax({
          type: 'POST',
-         url:baseUrl+"/update/"+uid+"/0/",
-         data:{text:"", code:0},
+         url:baseUrl+'/documentHandler.php',
+         data:{mode:'addCell', pid:pid, uid:uid},
          success: function(data){
              //alert("success");
              addToAcesArray(data);
          },
-         fail: function(data, d2){alert(d2);},
+         fail: function(data, d2){alert(data);},
          dataType:'json'
          });
         //addToAcesArray(fake_pid());
@@ -499,9 +501,11 @@ if (isset($uid)){
         //temp.setFontSize('15px');
         $(previous)[0].style.fontFamily = 'Courier';
 
-        temp.getSession().setMode(new JavaScriptMode());
+        //temp.getSession().setMode(new JavaScriptMode());
         aces[pid]=temp;
         aces[''+pid]=temp;
+		revisions[''+pid] = 0;
+		revisions[pid] = 0;
         temp.getSession().setUseWrapMode(true);
 
 		//var buffer = [];
@@ -529,11 +533,18 @@ if (isset($uid)){
 			if (toggle){
 				viewUpdate(data);
 			}
-            if (!dont_update&&uid!=1){
-                console.log('began update');
-                $.post(baseUrl+"/update/"+uid+"/"+temp.container.id+'/', {text:txt, code:0},
+            if (!dont_update&&pid!=1){
+                //console.log('began update');
+				revisions[temp.container.id]++;
+                $.post(baseUrl+"/documentHandler.php", 
+				{mode:"updateCell",
+				 pid:pid,
+				 uid:uid,
+				 cid:temp.container.id,
+				 text:txt
+				},
                  function(data){
-				 
+					//should test for 'success' and retry if fail
                  },"json");
             }
         });
@@ -546,7 +557,9 @@ if (isset($uid)){
     }
 
     function doPoll(){
-        $.get(baseUrl+"/get/"+uid, "",function(data){
+	console.log("polling");
+        $.get(baseUrl+"/documentHandler.php",{mode:"pollChangedCells", pid:pid, revision:JSON.stringify(revisions) },function(data){
+			console.log(data);
             dont_update = true;
             doGUIUpdates(data);
             dont_update = false;
@@ -595,19 +608,26 @@ if (isset($uid)){
 
         //Update Editor
         //console.log(data);
-        $.each(data, function(_,d) {
-
+		//Instead of doing this, we should use jQuery.parseJSON( json ) instead
+		var changedCells = $.parseJSON(data);
+        //$.each(data, function(_,d) {
+		for(var cell in changedCells){
             //Update the ace text boxs here
             //aces[pid].setValue(
             //console.log(active.container.id, aces[''+pid].container.id);
-            var pid = parseInt(d[0]);
-            var txt = d[1];
+            var pid = cell[0];
+			var revisionNum = cell[2];
+			var lockUid = cell[3];
+            var txt = cell[4];
 
             if (aces[''+pid] == undefined){
                 addToAcesArray(pid);
+				revisions[''+pid]=revisionNum;
             }
+			
+			aces[''+pid].session.setValue(txt);
 
-            if (active){
+            /*if (active){
                 //console.log(active.container.id, aces[''+pid].container.id);
                 if (active.container.id != aces[''+pid].container.id && txt!=aces[''+pid].session.getValue()){
 					console.log("Changing "+pid);
@@ -624,8 +644,8 @@ if (isset($uid)){
 					console.log("===================");
 					aces[''+pid].session.setValue(txt);
 				}
-            }
-        });
+            }*/
+        }
 
         viewUpdate(data);
     }
@@ -636,7 +656,7 @@ if (isset($uid)){
 
     $(document).ready( function() {
 
-        //addCell();
+        addCell();
 
         /*if (initial_data != false){
             // populate first
@@ -648,8 +668,8 @@ if (isset($uid)){
         }*/
 
         //Initialize active cell
-        active = editors.slice(-1).pop();
-        active.focus();
+        //active = editors.slice(-1).pop();
+        //active.focus();
         startPolling();
     });
 </script>

@@ -1,11 +1,3 @@
-<?php
-if (isset($uid)){
-	$uid = filter_input($uid,FILTER_SANITIZE_NUMBER_INT);
-}else{
-	echo "No page id!!?";
-	exit();
-}
-?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -451,7 +443,7 @@ if (isset($uid)){
 
 <script>
     var baseUrl = "";
-    var uid = <?php $uid ?>;
+    var uid = 1;
     var aces = {};
     var previous = "#top";
     dont_update = false;
@@ -647,10 +639,14 @@ if (isset($uid)){
             addCell();
         }*/
 
-        //Initialize active cell
-        active = editors.slice(-1).pop();
-        active.focus();
         startPolling();
+
+        // document.onkeypress=function(event){
+        // var keyCode = ('which' in event) ? event.which : event.keyCode;
+        // if (keyCode==13&&event.ctrlKey){
+        // addCell();
+        // }
+        // }
     });
 </script>
 
