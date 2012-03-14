@@ -1,6 +1,7 @@
 <?php
 if (isset($_REQUEST["pid"])){
-	$pid = filter_input($_REQUEST["pid"],FILTER_SANITIZE_NUMBER_INT);
+	//if (filter_input($_REQUEST["pid"],FILTER_SANITIZE_NUMBER_INT))
+	$pid=$_REQUEST["pid"];
 }else{
 	echo "No page id!!?";
 	exit();
@@ -179,12 +180,7 @@ if (isset($_REQUEST["pid"])){
         $(document).keydown(function(event){
 
             if (event.keyCode==13&&event.ctrlKey){
-                addCell();
-                // focus on latest pid
-                var pid = previous.substr(1);
-                var editor = aces[pid];
-                editor.focus();
-                active = editor;
+                addCell(true);
             }
 			if (event.ctrlKey && event.keyCode == 73){
 				// toggles the webtex
@@ -450,8 +446,8 @@ if (isset($_REQUEST["pid"])){
 </script>
 
 <script>
-    var baseUrl = "localhost:8080";
-    var pid = 4<?php //echo(''+$pid); ?>;
+    var baseUrl = "http://localhost:8080";
+    var pid = <?php echo(''+$pid); ?>;
 	var uid = 1;
     var aces = {};
 	var revisions = {};
@@ -463,15 +459,16 @@ if (isset($_REQUEST["pid"])){
 //        return gpid++;
 //    }
 
-    function addCell(){
+    function addCell(focusAfterwards){
+	console.log("new cell");
 //This adds a cell
         $.ajax({
          type: 'POST',
          url:baseUrl+'/documentHandler.php',
          data:{mode:'addCell', pid:pid, uid:uid},
          success: function(data){
-             //alert("success");
-             addToAcesArray(data);
+             //console.log(data);
+             addToAcesArray(data, focusAfterwards);
          },
          fail: function(data, d2){alert(data);},
          dataType:'json'
@@ -481,17 +478,21 @@ if (isset($_REQUEST["pid"])){
     one_height = null;
     //JavaScriptMode = require("src/mode/markdown").Mode;
 	
-    function addToAcesArray(pid){
-        $("<div id='"+pid+"' style='min-height: 20px; min-width: 500px' class='editor'></div>").insertAfter(previous);
+    function addToAcesArray(cid, focusAfterwards){
+		console.log("add cell");
+        $("<div id='"+cid+"' style='min-height: 20px; min-width: 500px' class='editor'></div>").insertAfter(previous);
         //document.getElementById(pid).focus();
-        previous = "#"+pid;
+        previous = "#"+cid;
         if (one_height == null){
             one_height = $(previous).height()+2;
         }
         //console.log(pid);
 
-        var temp = ace.edit(pid+"");
-		if(active){
+        var temp = ace.edit(cid+"");
+        if(focusAfterwards){
+            active = temp;
+        }
+        if(active){
 			active.focus();
 		}
         //active = temp;
@@ -502,10 +503,10 @@ if (isset($_REQUEST["pid"])){
         $(previous)[0].style.fontFamily = 'Courier';
 
         //temp.getSession().setMode(new JavaScriptMode());
-        aces[pid]=temp;
-        aces[''+pid]=temp;
-		revisions[''+pid] = 0;
-		revisions[pid] = 0;
+        aces[cid]=temp;
+        aces[''+cid]=temp;
+		revisions[''+cid] = 0;
+		revisions[cid] = 0;
         temp.getSession().setUseWrapMode(true);
 
 		//var buffer = [];
@@ -534,13 +535,14 @@ if (isset($_REQUEST["pid"])){
 				viewUpdate(data);
 			}
             if (!dont_update&&pid!=1){
-                //console.log('began update');
+                console.log('began update');
 				revisions[temp.container.id]++;
                 $.post(baseUrl+"/documentHandler.php", 
 				{mode:"updateCell",
 				 pid:pid,
 				 uid:uid,
 				 cid:temp.container.id,
+				 revision:revisions[temp.container.id],
 				 text:txt
 				},
                  function(data){
@@ -559,7 +561,7 @@ if (isset($_REQUEST["pid"])){
     function doPoll(){
 	console.log("polling");
         $.get(baseUrl+"/documentHandler.php",{mode:"pollChangedCells", pid:pid, revision:JSON.stringify(revisions) },function(data){
-			console.log(data);
+			//console.log(data);
             dont_update = true;
             doGUIUpdates(data);
             dont_update = false;
@@ -577,13 +579,17 @@ if (isset($_REQUEST["pid"])){
 
     function viewUpdate(data){
         var buf = '';
-        $.each(data, function(_,d){
-            var pid = d[0];
-            var txt = d[1];
-            var code = d[2];
-
+        /*$.each(data,function(_,cell){
+			//console.log(cell);
+            var pid = cell['pid'];
+			var revisionNum = cell['revision'];
+			var lockUid = cell['lockuid'];
+            var txt = cell['data'];
             buf += '\n\n'+txt.replace(/(<([^>]+)>)/ig,"");
-        })
+        })*/
+		 $.each(editors, function(_,editor){
+                buf+=(editor.session.getValue());
+            });
         var html = convertMarkdown(buf);
         // parse latex
         $("#view").html(html);
@@ -602,61 +608,50 @@ if (isset($_REQUEST["pid"])){
     }
 
     function doGUIUpdates(data){
-        //alert(data);
-        //console.log(data);
-        //a_veiwUpdate(aceData[0]);
-
         //Update Editor
         //console.log(data);
-		//Instead of doing this, we should use jQuery.parseJSON( json ) instead
-		var changedCells = $.parseJSON(data);
-        //$.each(data, function(_,d) {
-		for(var cell in changedCells){
+		//var changedCells = $.parseJSON(data);
+		//console.log(changedCells);
+        $.each(data, function() {
+		//for(var cell in data){
+		var cell = this;
+			console.log(cell);
             //Update the ace text boxs here
-            //aces[pid].setValue(
-            //console.log(active.container.id, aces[''+pid].container.id);
-            var pid = cell[0];
-			var revisionNum = cell[2];
-			var lockUid = cell[3];
-            var txt = cell[4];
+            var cid = cell['cid'];
+			var revisionNum = cell['revision'];
+			var lockUid = cell['lockuid'];
+            var txt = cell['data'];
 
-            if (aces[''+pid] == undefined){
-                addToAcesArray(pid);
-				revisions[''+pid]=revisionNum;
+            if (aces[''+cid] == undefined){
+                addToAcesArray(cid, false);
             }
-			
-			aces[''+pid].session.setValue(txt);
+			revisions[''+cid]=revisionNum;
+			//aces[''+cid].session.setValue(txt);
 
-            /*if (active){
+            if (active){
                 //console.log(active.container.id, aces[''+pid].container.id);
-                if (active.container.id != aces[''+pid].container.id && txt!=aces[''+pid].session.getValue()){
-					console.log("Changing "+pid);
-					console.log("Old:"+aces[''+pid].session.getValue());
-					console.log("New:"+txt);
-					console.log("===================");
-                    aces[''+pid].session.setValue(txt);
+                if (active.container.id != aces[''+cid].container.id){
+					//console.log("Changing "+pid);
+					//console.log("Old:"+aces[''+pid].session.getValue());
+					//console.log("New:"+txt);
+					//console.log("===================");
+                    aces[''+cid].session.setValue(txt);
                 }
             }else{
-				if (txt!=aces[''+pid].session.getValue()){
-					console.log("Changing "+pid);
-					console.log("Old:"+aces[''+pid].session.getValue());
-					console.log("New:"+txt);
-					console.log("===================");
-					aces[''+pid].session.setValue(txt);
-				}
-            }*/
-        }
+				aces[''+cid].session.setValue(txt);
+            }
+        });
 
         viewUpdate(data);
     }
 
     function startPolling(){
-        var ticker = setInterval(doPoll, 5000);
+        var ticker = setInterval(doPoll, 1000);
     }
 
     $(document).ready( function() {
-
-        addCell();
+		doPoll();
+        //addCell();
 
         /*if (initial_data != false){
             // populate first
@@ -664,7 +659,7 @@ if (isset($_REQUEST["pid"])){
             doGUIUpdates(initial_data);
             dont_update = false;
         } else {
-            addCell();
+            addCell(true);
         }*/
 
         //Initialize active cell

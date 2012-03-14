@@ -40,7 +40,7 @@ if ($mode==="createDocument"){ //Post
 
 	//Update Document to include cell
 	$result=mysql_query("SELECT cells FROM Documents WHERE pid='$pid'");
-	$row=mysql_fetch_array($result);
+	$row=mysql_fetch_assoc($result);
 	//var_dump($row);
 	if ($row["cells"]!=""){
 		foreach((explode(",", $row["cells"])) as $value){
@@ -55,35 +55,39 @@ if ($mode==="createDocument"){ //Post
 
 	mysql_query("UPDATE Documents SET cells='$record', permissions='$uid' WHERE pid='$pid'");
 	
-	echo($newCell);
+	echo(json_encode($newCell));
 }elseif($mode==="updateCell"){
 	$cid = $_POST["cid"];
 	$text = mysql_real_escape_string($_POST["text"]);
+	$revision = $_POST["revision"];
 	$result=mysql_query("SELECT cells FROM Documents WHERE pid='$pid'");
-	$row=mysql_fetch_array($result);
+	$row=mysql_fetch_assoc($result);
+	//echo(var_dump($row));
 	$cellsList = (explode(",", $row["cells"]));
-	if ($in_array($cid)){
-		mysql_query("UPDATE Cells SET data='$text' WHERE cid='$cid'");
+	if (in_array(intval($cid), $cellsList)){
+		mysql_query("UPDATE Cells SET data='$text',revision='$revision' WHERE cid='$cid'");
 		echo ('sucess');
 	}else{
-		echo ('cell not found');
+		echo ("cell not found".$pid);
 	}
 	
 }elseif($mode==="pollChangedCells"){ //Get
 	//checkPermission();
 	$result=mysql_query("SELECT * FROM Cells WHERE pid='$pid'");
-	$row=mysql_fetch_array($result);
+	//$row=mysql_fetch_assoc($result);
 	//A list of revision numbers, one for each cell
 	$revision = json_decode($_GET["revision"]);
+	//echo(var_dump($revision));
 	$changed = array();
-	foreach($row as $cell){
+	while ($cell = mysql_fetch_assoc($result)) {
 		$cid = $cell["cid"];
 		//Check if new cell has been added, or if cell has been changed
-		if (!array_key_exists($cid, $revision)||$cell["revision"]!=$revision[$cid]){
-			$changed[] = $row;
+		if (!array_key_exists($cid, $revision)||$cell["revision"]!=$revision[''.$cid]){
+			$changed[] = $cell;
 		}
 	}
 	echo (json_encode($changed));
+	//echo(var_dump($row));
 }elseif ($mode==="lockCell"){
 	
 }elseif ($mode==="unlockCell"){
