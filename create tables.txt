@@ -1,0 +1,63 @@
+-- phpMyAdmin SQL Dump
+-- version 3.2.4
+-- httpwww.phpmyadmin.net
+--
+-- Host localhost
+-- Generation Time Mar 14, 2012 at 0253 AM
+-- Server version 5.1.41
+-- PHP Version 5.3.1
+
+SET SQL_MODE=NO_AUTO_VALUE_ON_ZERO;
+
+--
+-- Database `omnipad`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cells`
+--
+
+CREATE TABLE IF NOT EXISTS `cells` (
+  `cid` int(11) NOT NULL AUTO_INCREMENT,
+  `pid` int(11) NOT NULL,
+  `revision` int(11) NOT NULL,
+  `lockuid` int(11) NOT NULL,
+  `data` text NOT NULL,
+  KEY `cid_2` (`cid`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+
+--
+-- Dumping data for table `cells`
+--
+
+INSERT INTO `cells` (`cid`, `pid`, `revision`, `lockuid`, `data`) VALUES
+(1, 4, 63, -1, 'hello, this is a sentence,'),
+(2, 4, 150, -1, 'does this change my cursor nope, i didn''t think so'),
+(3, 4, 102, -1, 'ehop does this change my cursor sdlfksjf;lafs'),
+(4, 4, 5, -1, 'hello');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `documents`
+--
+
+CREATE TABLE IF NOT EXISTS `documents` (
+  `pid` int(11) NOT NULL AUTO_INCREMENT,
+  `title` varchar(256) NOT NULL,
+  `cells` text NOT NULL,
+  `permissions` text NOT NULL,
+  UNIQUE KEY `pid` (`pid`),
+  UNIQUE KEY `pid_2` (`pid`),
+  KEY `pid_3` (`pid`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
+
+--
+-- Dumping data for table `documents`
+--
+
+INSERT INTO `documents` (`pid`, `title`, `cells`, `permissions`) VALUES
+(5, '', '', ''),
+(4, 'bla', '1,1,2,2,3,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,4', '1');
