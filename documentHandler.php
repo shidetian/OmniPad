@@ -27,12 +27,17 @@ Cells
 	- cid:cell#, pid:document#, revision:revision#, lockuid:lock uid, data:data
 */
 
-if ($mode==="createDocument"){ //Post
+//Creates a new Document
+//Expected type: post; Data required: uid, title; Data returned: pid
+if ($mode==="createDocument"){
 	$title = mysql_real_escape_string($_REQUEST["title"]);
 	mysql_query("INSERT INTO Documents VALUES ('','$title','','$uid')");
-	echo "INSERT INTO Documents VALUES ('','$title','','$uid')";
+	//echo "INSERT INTO Documents VALUES ('','$title','','$uid')";
 	echo (mysql_insert_id());
-}elseif($mode==="addCell"){ //Post
+}
+//Creates a new cell
+//Expected type: post; Data required: pid, uid; Data returned: cid
+elseif($mode==="addCell"){
 	//checkPermission();
 	//Add cell
 	mysql_query("INSERT INTO Cells VALUES ('',$pid,'0', '-1', '')");
@@ -56,7 +61,10 @@ if ($mode==="createDocument"){ //Post
 	mysql_query("UPDATE Documents SET cells='$record', permissions='$uid' WHERE pid='$pid'");
 	
 	echo(json_encode($newCell));
-}elseif($mode==="updateCell"){
+}
+//Updates a cell
+//Expected type: post; Data required: pid, uid, cid; Data returned: 'success' or 'cell not found'.pid
+elseif($mode==="updateCell"){
 	$cid = $_POST["cid"];
 	$text = mysql_real_escape_string($_POST["text"]);
 	$revision = $_POST["revision"];
@@ -68,10 +76,13 @@ if ($mode==="createDocument"){ //Post
 		mysql_query("UPDATE Cells SET data='$text',revision='$revision' WHERE cid='$cid'");
 		echo ('sucess');
 	}else{
-		echo ("cell not found".$pid);
+		echo ("cell not found".$pid." ".$cid);
 	}
 	
-}elseif($mode==="pollChangedCells"){ //Get
+}
+//Returns changed cells
+//Expected type: get; Data required: pid, uid, cid, revisions list; Data returned: changed cells
+elseif($mode==="pollChangedCells"){
 	//checkPermission();
 	$result=mysql_query("SELECT * FROM Cells WHERE pid='$pid'");
 	//$row=mysql_fetch_assoc($result);
