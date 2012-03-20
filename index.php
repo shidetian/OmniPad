@@ -446,7 +446,7 @@ if (isset($_REQUEST["pid"])){
 </script>
 
 <script>
-    var baseUrl = "http://localhost:8080";
+    var baseUrl = "http://omnipad.ignorelist.com/omnipadX";
     var pid = <?php echo(''+$pid); ?>;
 	var uid = 1;
     var aces = {};
@@ -560,7 +560,7 @@ if (isset($_REQUEST["pid"])){
 
     function doPoll(){
 	console.log("polling");
-        $.get(baseUrl+"/documentHandler.php",{mode:"pollChangedCells", pid:pid, revision:JSON.stringify(revisions) },function(data){
+        $.get(baseUrl+"/documentHandler.php",{mode:"pollChangedCells", uid:uid, pid:pid, revision:JSON.stringify(revisions) },function(data){
 			//console.log(data);
             dont_update = true;
             doGUIUpdates(data);

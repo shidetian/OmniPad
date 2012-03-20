@@ -82,7 +82,7 @@ if ($mode==="createDocument"){ //Post
 	while ($cell = mysql_fetch_assoc($result)) {
 		$cid = $cell["cid"];
 		//Check if new cell has been added, or if cell has been changed
-		if (!array_key_exists($cid, $revision)||$cell["revision"]!=$revision[''.$cid]){
+		if (!in_array($cid, $revision)||$cell["revision"]!=$revision[''.$cid]){
 			$changed[] = $cell;
 		}
 	}
